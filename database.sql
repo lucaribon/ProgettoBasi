@@ -355,7 +355,7 @@ INSERT INTO Automobile(Marca, Modello, Versione, Carrozzeria, Cambio, NumPosti, 
 ('Opel','Corsa','2024', 'City Car', 'Manuale', 5, '57234918235', 'Euro 6');
 
 -- INSERIMENTO VEICOLI
-INSERT INTO Veicolo(NumeroTelaio, Targa, Colore, MarcaAuto, ModelloAuto, VersioneAuto, Chilometraggio, AnnoImmatricolazione) VALUES
+INSERT INTO Veicolo(NumeroTelaio, Targa, Colore, MarcaAuto, ModelloAuto, VersioneAuto) VALUES
 ('WAUZZZ8KZMA000001', 'AA001AA', 'Nero', 'Audi', 'A4', '2020 Business'),
 ('WAUZZZ8KZMA040002', 'AA002AA', 'Bianco', 'Audi', 'A4', '2020 S-Line'),
 ('JTDKTUD3000000001', 'AA003AA', 'Blu', 'Toyota', 'Yaris', '2020'),
