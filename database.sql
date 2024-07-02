@@ -1,18 +1,19 @@
--- CREAZIONE DATABASE
+-- SETUP AMBIENTE
+DROP VIEW IF EXISTS MediaRecensioni;
 
-DROP TABLE IF EXISTS Utente;
 DROP TABLE IF EXISTS Recensione;
-DROP TABLE IF EXISTS Luogo;
+DROP TABLE IF EXISTS Preferenze;
 DROP TABLE IF EXISTS Impresa;
 DROP TABLE IF EXISTS Privato;
-DROP TABLE IF EXISTS Immagine;
 DROP TABLE IF EXISTS ImmagineAnnuncio;
-DROP TABLE IF EXISTS Annuncio;
-DROP TABLE IF EXISTS Preferenze;
 DROP TABLE IF EXISTS Prezzo;
-DROP TABLE IF EXISTS Motorizzazione;
-DROP TABLE IF EXISTS Automobile;
+DROP TABLE IF EXISTS Annuncio;
+DROP TABLE IF EXISTS Utente;
+DROP TABLE IF EXISTS Immagine;
+DROP TABLE IF EXISTS Luogo;
 DROP TABLE IF EXISTS Veicolo;
+DROP TABLE IF EXISTS Automobile;
+DROP TABLE IF EXISTS Motorizzazione;
 
 DROP TYPE IF EXISTS TIPOTRAZIONE;
 DROP TYPE IF EXISTS TIPOALIMENTAZIONE;
@@ -226,8 +227,15 @@ INSERT INTO Recensione(EmailRecensore, EmailRecensito, Valutazione, Commento) VA
 ('deodatologgia@gmail.com','anitatrevisani@autosrl.com', 8, 'Ottimo venditore, ottima offerta, macchina in perfette condizioni e personale molto cordiale.'),
 ('wolfgang.chan@supercars.de','lorisgommata@ceccatomotors.it', 3, 'Als klassischer italienischer Käufer forderte er mich auf, ohne Rechnung zu zahlen, und als ich mich weigerte, geriet er auf dem Parkplatz des Händlers ins Schleudern'),
 ('cirorusso@gmail.com', 'beppefucile@autoclass.it', 6, 'Buon venditore, macchina in buone condizioni, ma il prezzo era un po'' troppo alto.'),
-('anitatrevisani@autosrl.com','beppefucile@autoclass.it', 4, 'La macchina non si accende più :(, unlucky'),
-('lorisgommata@ceccatomotors.it','beppefucile@autoclass.it', 1, 'Ho chiesto di pagare all''italiana, ma il venditore ha rifiutato. Inutile dire che me ne sono andato sgommando per la rabbia.'); 
+('anitatrevisani@autosrl.com','beppefucile@autoclass.it', 4, 'La macchina non si accende più, unlucky'),
+('lorisgommata@ceccatomotors.it','beppefucile@autoclass.it', 1, 'Ho chiesto di pagare all''italiana, ma il venditore ha rifiutato. Inutile dire che me ne sono andato sgommando per la rabbia.'),
+--genera altre 10 recensioni prendendo gli utenti da utente
+('anitatrevisani@autosrl.com', 'cirorusso@gmail.com', 7, 'Ottimo venditore, macchina in ottime condizioni, prezzo giusto.'),
+('anitatrevisani@autosrl.com', 'lorisgommata@ceccatomotors.it', 4, 'Venditore scortese, mi ha mandato via in malo modo perchè aveva appena litigato con la moglie.'),
+('deodatologgia@gmail.com', 'cirorusso@gmail.com', 8, 'Ottima impressione, tornerò a fare affari con lui.'),
+('deodatologgia@gmail.com', 'wolfgang.chan@supercars.de', 10, 'Venditore molto professionale, macchina in ottime condizioni, prezzo giusto.'),
+('cirorusso@gmail.com', 'wolfgang.chan@supercars.de', 9, 'Venditore estero, molto attento ai dettagli e disposto a venirti incontro.');
+
 
 -- INSERIMENTO IMMAGINI
 INSERT INTO Immagine(UrlImmagine, IsCopertina) VALUES
@@ -424,6 +432,20 @@ FROM Annuncio AS A JOIN Veicolo AS V ON A.NumeroTelaio=V.NumeroTelaio
 GROUP BY L.Comune, L.Stato, AU.Marca
 HAVING L.Stato='IT';
 
--- trovare le 5 cilindrate più comuni tra gli annunci degli utenti con valutazione di recensioni superiori alla media
+-- trovare le alimentazioni più comuni tra gli annunci degli utenti con valutazione media di recensioni superiori alla media
+CREATE VIEW MediaRecensioni AS
+SELECT R.EmailRecensito AS UtenteRecensito, AVG(R.Valutazione) as MediaValutazione
+FROM Recensione AS R 
+GROUP BY R.EmailRecensito;
 
-SEL
+SELECT A.EmailUtente, M.Alimentazione, COUNT(*) AS AnnunciAlimentazione
+FROM Annuncio as A JOIN Veicolo as V ON A.NumeroTelaio=V.NumeroTelaio
+    JOIN Automobile as AU ON V.MarcaAuto=AU.Marca AND V.ModelloAuto=AU.Modello AND V.VersioneAuto=AU.Versione
+    JOIN Motorizzazione as M ON AU.CodiceMotore=M.CodiceMotore
+    JOIN MediaRecensioni as MR ON A.EmailUtente=MR.UtenteRecensito
+WHERE MR.MediaValutazione > (
+    SELECT AVG(MediaValutazione) as MediaGlobale
+    FROM MediaRecensioni
+)
+GROUP BY A.EmailUtente, M.Alimentazione
+ORDER BY AnnunciAlimentazione DESC;
