@@ -4,17 +4,18 @@
 #include "./dependencies/lib/libpq-fe.h"
 
 // Inizializza la connessione al database
-int inizializzaConnessione(PGconn *conn, char user[], char pass[], char database[], char host[],
-                           int port) {
+int inizializzaConnessione(PGconn *conn, char user[], char pass[],
+                           char database[], char host[], int port) {
     // Connessione al database
     char infoconn[300];
-    sprintf(infoconn, "user=%s password=%s dbname=%s hostaddr=%s port=%d", user, pass, database,
-            host, port);
+    sprintf(infoconn, "user=%s password=%s dbname=%s hostaddr=%s port=%d", user,
+            pass, database, host, port);
     conn = PQconnectdb(infoconn);
 
     // Controllo connessione
     if (PQstatus(conn) != CONNECTION_OK) {
-        fprintf(stderr, "Connessione al database fallita: %s", PQerrorMessage(conn));
+        fprintf(stderr, "Connessione al database fallita: %s",
+                PQerrorMessage(conn));
         PQfinish(conn);
         return 1;
     } else {
@@ -47,7 +48,8 @@ void stampaRisultato(PGresult *res) {
 void eseguiQuery(PGconn *conn, char query[]) {
     PGresult *res = PQexec(conn, query);
     if (PQresultStatus(res) != PGRES_TUPLES_OK) {
-        fprintf(stderr, "Query fallita con errore : \n\t%s", PQerrorMessage(conn));
+        fprintf(stderr, "Query fallita con errore : \n\t%s",
+                PQerrorMessage(conn));
         PQclear(res);
         return;
     }
@@ -55,10 +57,13 @@ void eseguiQuery(PGconn *conn, char query[]) {
     PQclear(res);
 }
 
-void eseguiQueryParametrica(PGconn *conn, char query[], int n_param, char *param[]) {
-    PGresult *res = PQexecParams(conn, query, n_param, NULL, param, NULL, NULL, 0);
+void eseguiQueryParametrica(PGconn *conn, char query[], int n_param,
+                            const char *const *param) {
+    PGresult *res =
+        PQexecParams(conn, query, n_param, NULL, param, NULL, NULL, 0);
     if (PQresultStatus(res) != PGRES_TUPLES_OK) {
-        fprintf(stderr, "Query fallita con errore : \n\t%s", PQerrorMessage(conn));
+        fprintf(stderr, "Query fallita con errore : \n\t%s",
+                PQerrorMessage(conn));
         PQclear(res);
         return;
     }
@@ -68,15 +73,16 @@ void eseguiQueryParametrica(PGconn *conn, char query[], int n_param, char *param
 
 int main(int argc, char const *argv[]) {
     // Credenziali database
-    char PG_USER[20] = "admin";
-    char PG_PASS[20] = "admin";
+    char PG_USER[20] = "postgres";
+    char PG_PASS[20] = "postgres";
     char PG_DATABASE[30] = "ProgettoBasi";
-    char PG_HOST[20] = "localhost";
+    char PG_HOST[20] = "127.0.0.1";
     int PG_PORT = 5432;
 
     // Connessione al database
     PGconn *conn;
-    int status_db = inizializzaConnessione(conn, PG_USER, PG_PASS, PG_DATABASE, PG_HOST, PG_PORT);
+    int status_db = inizializzaConnessione(conn, PG_USER, PG_PASS, PG_DATABASE,
+                                           PG_HOST, PG_PORT);
     char status[20];
     if (status_db == 0) {
         sprintf(status, "Connesso");
@@ -93,7 +99,7 @@ int main(int argc, char const *argv[]) {
             "/_/   \\_\\__,_|\\__\\___/____/ \\___|\\__,_|_|  \\___|_| |_|\n"
             "\n");
         printf("---------------------------------\n");
-        printf("| STATO DATABASE: < %s > \t|\n", status);
+        printf("| STATO DATABASE: %s\t|\n", status);
         printf("---------------------------------\n\n");
         printf("- MODIFICA IMPOSTAZIONI DATABASE\n");
         printf("\t1. Modifica credenziali\n");
@@ -120,12 +126,13 @@ int main(int argc, char const *argv[]) {
                 return 0;
             case 1:
                 printf("Le credenziali attuali sono: \n");
-                printf("User: %s\n", PG_USER);
-                printf("Password: %s\n", PG_PASS);
-                printf("Database: %s\n", PG_DATABASE);
-                printf("Host: %s\n", PG_HOST);
-                printf("Port: %d\n", PG_PORT);
-                printf("\nVuoi modificare le credenziali? (s/n)  ");
+                printf("- User: %s\n", PG_USER);
+                printf("- Password: %s\n", PG_PASS);
+                printf("- Database: %s\n", PG_DATABASE);
+                printf("- Host: %s\n", PG_HOST);
+                printf("- Port: %d\n", PG_PORT);
+                printf("\nVuoi modificare le credenziali? (s/n) ");
+
                 char risposta;
                 scanf(" %c", &risposta);
                 if (risposta != 's' && risposta != 'S') {
@@ -133,7 +140,7 @@ int main(int argc, char const *argv[]) {
                     break;
                 }
 
-                chiudiConnessione(conn);
+                // chiudiConnessione(conn);
 
                 printf("\nInserisci le nuove credenziali: \n");
                 printf("- User: ");
@@ -147,9 +154,12 @@ int main(int argc, char const *argv[]) {
                 printf("- Port: ");
                 scanf("%d", &PG_PORT);
 
-                inizializzaConnessione(conn, PG_USER, PG_PASS, PG_DATABASE, PG_HOST, PG_PORT);
+                inizializzaConnessione(conn, PG_USER, PG_PASS, PG_DATABASE,
+                                       PG_HOST, PG_PORT);
                 break;
             case 2:
+                char query[200]="SELECT Email, COUNT(NumeroAnnunci) AS AnnunciPubblicati FROM Utente AS U JOIN Annuncio AS A ON U.Email=A.EmailUtente GROUP BY Email;";
+                eseguiQuery(conn, query);
                 break;
             case 3:
                 break;
