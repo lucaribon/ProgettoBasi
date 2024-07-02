@@ -1,4 +1,6 @@
+-------------------------------------------------------------------------------------------------------
 -- SETUP AMBIENTE
+-------------------------------------------------------------------------------------------------------
 DROP VIEW IF EXISTS MediaRecensioni;
 
 DROP TABLE IF EXISTS Recensione;
@@ -19,12 +21,16 @@ DROP TYPE IF EXISTS TIPOTRAZIONE;
 DROP TYPE IF EXISTS TIPOALIMENTAZIONE;
 DROP TYPE IF EXISTS TIPOCAMBIO;
 
+-------------------------------------------------------------------------------------------------------
 -- CREAZIONE TIPI ENUMERATORI
+-------------------------------------------------------------------------------------------------------
 CREATE TYPE TIPOTRAZIONE as ENUM ('Anteriore', 'Integrale', 'Posteriore');
 CREATE TYPE TIPOALIMENTAZIONE as ENUM ('Benzina', 'Diesel', 'Etanolo', 'Elettrico', 'Elettrico/Benzina','Elettrico/Diesel', 'GPL', 'Metano');
 CREATE TYPE TIPOCAMBIO as ENUM ('Automatico', 'Manuale', 'Semiautomatico');
 
+-------------------------------------------------------------------------------------------------------
 -- CREAZIONE TABELLE
+-------------------------------------------------------------------------------------------------------
 CREATE TABLE Utente(
     Email VARCHAR(64) PRIMARY KEY,
     Pass VARCHAR(64) NOT NULL,
@@ -147,7 +153,7 @@ CREATE TABLE Prezzo(
 
 -------------------------------------------------------------------------------------------------------
 -- TRIGGER
-
+-------------------------------------------------------------------------------------------------------
 -- Controllo immagine di copertina
 CREATE OR REPLACE FUNCTION copertinaUnica()
 RETURNS TRIGGER
@@ -213,7 +219,7 @@ EXECUTE FUNCTION incrementaNumeroAnnunci();
 
 -------------------------------------------------------------------------------------------------------
 -- INSERIMENTO DATI
-
+-------------------------------------------------------------------------------------------------------
 -- INSERIMENTO LUOGHI
 INSERT INTO Luogo(Comune, CAP, Provincia, Stato) VALUES
 ('Palermo','90126','PA','IT'),
@@ -366,7 +372,6 @@ INSERT INTO Veicolo(NumeroTelaio, Targa, Colore, MarcaAuto, ModelloAuto, Version
 ('WVWZZZ1J123A00001', 'AA007AA', 'Giallo', 'Opel', 'Corsa', '2024'),
 ('WVWZZZ1J178A00001', 'AA008AA', 'Rosso', 'Peugeot', '208', '2024');
 
-
 -- INSERIMENTO ANNUNCI
 INSERT INTO Annuncio(IdAnnuncio, Descrizione, Prezzo, EmailUtente, NumeroTelaio, CAP, Comune, Chilometraggio, AnnoImmatricolazione) VALUES
 (1, 'Audi A4 2020 Business', 30000.00, 'cirorusso@gmail.com', 'WAUZZZ8KZMA000001', '90126', 'Palermo', 100000, 2020),
@@ -443,7 +448,6 @@ INSERT INTO ImmagineAnnuncio(UrlImmagine, IdAnnuncio) VALUES
 ('https://www.autosearch.it/img/wolfgang%2Echan%40supercars%2Ede/opel-corsa-2024-4.jpg', 9),
 ('https://www.autosearch.it/img/wolfgang%2Echan%40supercars%2Ede/opel-corsa-2024-5.jpg', 9);
 
-
 -- INSERIMENTO PREFERENZE
 INSERT INTO Preferenze(EmailUtente, IdAnnuncio) VALUES
 ('deodatologgia@gmail.com', 6),
@@ -503,6 +507,7 @@ INSERT INTO Prezzo(IdAnnuncio, DataPrezzo, Valore) VALUES
 
 -------------------------------------------------------------------------------------------------------
 -- QUERY
+-------------------------------------------------------------------------------------------------------
 -- contare il numero di annunci per ogni utente
 SELECT Email, COUNT(NumeroAnnunci) AS AnnunciPubblicati
 FROM Utente AS U JOIN Annuncio AS A ON U.Email=A.EmailUtente
