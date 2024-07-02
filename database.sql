@@ -417,12 +417,13 @@ FROM Annuncio AS A JOIN Veicolo AS V ON A.NumeroTelaio=V.NumeroTelaio
 WHERE M.Trazione='Anteriore';
 
 -- prezzo medio dei veicoli per ogni marca in ogni comune italiano
-SELECT L.Comune, AU.Marca, AVG(A.Prezzo) AS PrezzoMedio
+SELECT L.Comune, AU.Marca, TRUNC(AVG(A.Prezzo)) AS PrezzoMedio
 FROM Annuncio AS A JOIN Veicolo AS V ON A.NumeroTelaio=V.NumeroTelaio 
     JOIN Automobile AS AU ON V.MarcaAuto=AU.Marca AND V.ModelloAuto=AU.Modello AND V.VersioneAuto=AU.Versione
     JOIN Luogo AS L ON A.CAP=L.CAP AND A.Comune=L.Comune
 GROUP BY L.Comune, L.Stato, AU.Marca
 HAVING L.Stato='IT';
 
-
 -- trovare le 5 cilindrate più comuni tra gli annunci degli utenti con valutazione di recensioni superiori alla media
+
+SEL
