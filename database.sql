@@ -30,7 +30,7 @@ CREATE TABLE Utente(
     Pass VARCHAR(64) NOT NULL,
     Telefono VARCHAR(10) NOT NULL,
     NumeroAnnunci INT NOT NULL,
-    CHECK (NumeroAnnunci = 0) -- guardo che sia zero perchè è il nuovo utente
+    CHECK (NumeroAnnunci >= 0)
 );
 
 CREATE TABLE Recensione(
@@ -193,6 +193,24 @@ CREATE OR REPLACE TRIGGER controlloVeicoloNuovoImpresa BEFORE INSERT ON Annuncio
 FOR EACH ROW
 EXECUTE FUNCTION controlloVeicoloNuovo();
 
+-- incremento numero annunci utente dopo inserimento annuncio
+CREATE OR REPLACE FUNCTION incrementaNumeroAnnunci()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    UPDATE Utente
+    SET NumeroAnnunci=NumeroAnnunci+1
+    WHERE Email=NEW.EmailUtente;
+
+    RETURN NEW;
+END;
+$$;
+
+CREATE OR REPLACE TRIGGER incrementaNumeroAnnunciUtente AFTER INSERT ON Annuncio
+FOR EACH ROW
+EXECUTE FUNCTION incrementaNumeroAnnunci();
+
 -------------------------------------------------------------------------------------------------------
 -- INSERIMENTO DATI
 
@@ -201,12 +219,16 @@ INSERT INTO Luogo(Comune, CAP, Provincia, Stato) VALUES
 ('Palermo','90126','PA','IT'),
 ('Padova','35010','PD','IT'),
 ('Vicenza','36100','VI','IT'),
-('Berlin','10176','BE','DE');
+('Berlin','10176','BE','DE'),
+('Roma','00187','RM','IT'),
+('Casalserugo','35020','PD','IT');
 
 -- INSERIMENTO UTENTI
 INSERT INTO Utente(Email, Pass, Telefono, NumeroAnnunci) VALUES 
 ('deodatologgia@gmail.com', 'deologgia42', '3367979106', 0), -- privato
 ('cirorusso@gmail.com','cirorusso','3274482743', 0), -- privato
+('guidolavespa@libero.it','guguvespa', '3331247590', 0), -- privato
+('marcopolo@tiscali.it','marchetto6', '3245566709', 0), -- privato
 ('anitatrevisani@autosrl.com','amolemacchine','3983135981', 0), -- impresa
 ('beppefucile@autoclass.it','occhiobalocchio','3331247590', 0), -- impresa
 ('lorisgommata@ceccatomotors.it','corrievai', '3245675132', 0), -- impresa
@@ -214,7 +236,9 @@ INSERT INTO Utente(Email, Pass, Telefono, NumeroAnnunci) VALUES
 
 INSERT INTO Privato(EmailUtente, NomeCognome, DataNascita) VALUES
 ('deodatologgia@gmail.com','Deodato Loggia', '2000-01-01'),
-('cirorusso@gmail.com', 'Ciro Russo', '1979-04-10');
+('cirorusso@gmail.com', 'Ciro Russo', '1979-04-10'),
+('guidolavespa@libero.it','Guido La Vespa', '1990-05-15'),
+('marcopolo@tiscali.it','Marco Polo', '1985-12-25');
 
 INSERT INTO Impresa(EmailUtente, CodicePartitaIva, NomeImpresa, SedeComune, SedeCAP) VALUES
 ('anitatrevisani@autosrl.com','12345678901','AutoSRL','Palermo','90126'),
@@ -226,16 +250,15 @@ INSERT INTO Impresa(EmailUtente, CodicePartitaIva, NomeImpresa, SedeComune, Sede
 INSERT INTO Recensione(EmailRecensore, EmailRecensito, Valutazione, Commento) VALUES
 ('deodatologgia@gmail.com','anitatrevisani@autosrl.com', 8, 'Ottimo venditore, ottima offerta, macchina in perfette condizioni e personale molto cordiale.'),
 ('wolfgang.chan@supercars.de','lorisgommata@ceccatomotors.it', 3, 'Als klassischer italienischer Käufer forderte er mich auf, ohne Rechnung zu zahlen, und als ich mich weigerte, geriet er auf dem Parkplatz des Händlers ins Schleudern'),
+('anitatrevisani@autosrl.com', 'lorisgommata@ceccatomotors.it', 4, 'Venditore scortese, mi ha mandato via in malo modo perchè aveva appena litigato con la moglie.'),
 ('cirorusso@gmail.com', 'beppefucile@autoclass.it', 6, 'Buon venditore, macchina in buone condizioni, ma il prezzo era un po'' troppo alto.'),
 ('anitatrevisani@autosrl.com','beppefucile@autoclass.it', 4, 'La macchina non si accende più, unlucky'),
 ('lorisgommata@ceccatomotors.it','beppefucile@autoclass.it', 1, 'Ho chiesto di pagare all''italiana, ma il venditore ha rifiutato. Inutile dire che me ne sono andato sgommando per la rabbia.'),
---genera altre 10 recensioni prendendo gli utenti da utente
 ('anitatrevisani@autosrl.com', 'cirorusso@gmail.com', 7, 'Ottimo venditore, macchina in ottime condizioni, prezzo giusto.'),
-('anitatrevisani@autosrl.com', 'lorisgommata@ceccatomotors.it', 4, 'Venditore scortese, mi ha mandato via in malo modo perchè aveva appena litigato con la moglie.'),
+('guidolavespa@libero.it', 'cirorusso@gmail.com', 10, 'Prezzone, l''auto dei miei sogni, finalmente mia!.'),
 ('deodatologgia@gmail.com', 'cirorusso@gmail.com', 8, 'Ottima impressione, tornerò a fare affari con lui.'),
 ('deodatologgia@gmail.com', 'wolfgang.chan@supercars.de', 10, 'Venditore molto professionale, macchina in ottime condizioni, prezzo giusto.'),
 ('cirorusso@gmail.com', 'wolfgang.chan@supercars.de', 9, 'Venditore estero, molto attento ai dettagli e disposto a venirti incontro.');
-
 
 -- INSERIMENTO IMMAGINI
 INSERT INTO Immagine(UrlImmagine, IsCopertina) VALUES
@@ -250,7 +273,7 @@ INSERT INTO Immagine(UrlImmagine, IsCopertina) VALUES
 ('https://www.autosearch.it/img/cirorusso%40gmail%2Ecom/audi-a4-2020-business-8.jpg', FALSE),
 ('https://www.autosearch.it/img/cirorusso%40gmail%2Ecom/audi-a4-2020-business-9.jpg', FALSE),
 ('https://www.autosearch.it/img/cirorusso%40gmail%2Ecom/audi-a4-2020-business-10.jpg', FALSE),
--- audi a4 2020 s-line cirorusso
+-- audi a4 2020 s-line 
 ('https://www.autosearch.it/img/cirorusso%40gmail%2Ecom/audi-a4-2020-s-line-1.jpg', TRUE),
 ('https://www.autosearch.it/img/cirorusso%40gmail%2Ecom/audi-a4-2020-s-line-2.jpg', FALSE),
 ('https://www.autosearch.it/img/cirorusso%40gmail%2Ecom/audi-a4-2020-s-line-3.jpg', FALSE),
@@ -291,7 +314,24 @@ INSERT INTO Immagine(UrlImmagine, IsCopertina) VALUES
 ('https://www.autosearch.it/img/beppefucile%40autoclass%2Eit/audi-a4-2006-1.jpg', TRUE),
 ('https://www.autosearch.it/img/beppefucile%40autoclass%2Eit/audi-a4-2006-2.jpg', FALSE),
 ('https://www.autosearch.it/img/beppefucile%40autoclass%2Eit/audi-a4-2006-3.jpg', FALSE),
-('https://www.autosearch.it/img/beppefucile%40autoclass%2Eit/audi-a4-2006-4.jpg', FALSE);
+('https://www.autosearch.it/img/beppefucile%40autoclass%2Eit/audi-a4-2006-4.jpg', FALSE),
+-- peugeot 208 2024
+('https://www.autosearch.it/img/wolfgang%2Echan%40supercars%2Ede/peugeot-208-2024-1.jpg', FALSE),
+('https://www.autosearch.it/img/wolfgang%2Echan%40supercars%2Ede/peugeot-208-2024-2.jpg', FALSE),
+('https://www.autosearch.it/img/wolfgang%2Echan%40supercars%2Ede/peugeot-208-2024-3.jpg', FALSE),
+('https://www.autosearch.it/img/wolfgang%2Echan%40supercars%2Ede/peugeot-208-2024-4.jpg', FALSE),
+('https://www.autosearch.it/img/wolfgang%2Echan%40supercars%2Ede/peugeot-208-2024-5.jpg', TRUE),
+('https://www.autosearch.it/img/wolfgang%2Echan%40supercars%2Ede/peugeot-208-2024-6.jpg', FALSE),
+('https://www.autosearch.it/img/wolfgang%2Echan%40supercars%2Ede/peugeot-208-2024-7.jpg', FALSE),
+('https://www.autosearch.it/img/wolfgang%2Echan%40supercars%2Ede/peugeot-208-2024-8.jpg', FALSE),
+('https://www.autosearch.it/img/wolfgang%2Echan%40supercars%2Ede/peugeot-208-2024-9.jpg', FALSE),
+('https://www.autosearch.it/img/wolfgang%2Echan%40supercars%2Ede/peugeot-208-2024-10.jpg', FALSE),
+-- opel corsa 2024
+('https://www.autosearch.it/img/wolfgang%2Echan%40supercars%2Ede/opel-corsa-2024-1.jpg', FALSE),
+('https://www.autosearch.it/img/wolfgang%2Echan%40supercars%2Ede/opel-corsa-2024-2.jpg', FALSE),
+('https://www.autosearch.it/img/wolfgang%2Echan%40supercars%2Ede/opel-corsa-2024-3.jpg', FALSE),
+('https://www.autosearch.it/img/wolfgang%2Echan%40supercars%2Ede/opel-corsa-2024-4.jpg', FALSE),
+('https://www.autosearch.it/img/wolfgang%2Echan%40supercars%2Ede/opel-corsa-2024-5.jpg', FALSE);
 
 -- INSERIMENTO MOTORIZZAZIONI
 INSERT INTO Motorizzazione(CodiceMotore, Alimentazione, Potenza, Trazione, Cilindri, Cilindrata) VALUES
@@ -299,7 +339,8 @@ INSERT INTO Motorizzazione(CodiceMotore, Alimentazione, Potenza, Trazione, Cilin
 ('98742634145', 'Diesel', 120, 'Anteriore', 4, 1600),
 ('45678912301', 'Benzina', 500, 'Posteriore', 6, 3000),
 ('78784723144', 'Benzina', 300, 'Integrale', 8, 4000),
-('32356479874', 'Elettrico/Benzina', 110, 'Anteriore', 3, 1200);
+('32356479874', 'Elettrico/Benzina', 110, 'Anteriore', 3, 1200),
+('57234918235', 'Benzina', 136, 'Anteriore', 3, 1199);
 
 -- INSERIMENTO AUTO
 INSERT INTO Automobile(Marca, Modello, Versione, Carrozzeria, Cambio, NumPosti, CodiceMotore, ClasseEmissioni) VALUES
@@ -309,17 +350,22 @@ INSERT INTO Automobile(Marca, Modello, Versione, Carrozzeria, Cambio, NumPosti, 
 ('Volkswagen', 'Passat', '2021', 'Station Wagon', 'Automatico', 5, '78784723144', 'Euro 6'),
 ('Skoda', 'Octavia', '2021', 'Station Wagon', 'Automatico', 5, '98742634145', 'Euro 6'),
 ('BMW', 'M3', '2010', 'Berlina', 'Semiautomatico', 4, '45678912301', 'Euro 4'),
-('Audi', 'A4', '2006', 'Berlina', 'Manuale', 5, '12345678901', 'Euro 3');
+('Audi', 'A4', '2006', 'Berlina', 'Manuale', 5, '12345678901', 'Euro 3'),
+('Peugeot', '208', '2024', 'City Car', 'Automatico', 5, '57234918235', 'Euro 6'),
+('Opel','Corsa','2024', 'City Car', 'Manuale', 5, '57234918235', 'Euro 6');
 
 -- INSERIMENTO VEICOLI
-INSERT INTO Veicolo(NumeroTelaio, Targa, Colore, MarcaAuto, ModelloAuto, VersioneAuto) VALUES
+INSERT INTO Veicolo(NumeroTelaio, Targa, Colore, MarcaAuto, ModelloAuto, VersioneAuto, Chilometraggio, AnnoImmatricolazione) VALUES
 ('WAUZZZ8KZMA000001', 'AA001AA', 'Nero', 'Audi', 'A4', '2020 Business'),
 ('WAUZZZ8KZMA040002', 'AA002AA', 'Bianco', 'Audi', 'A4', '2020 S-Line'),
 ('JTDKTUD3000000001', 'AA003AA', 'Blu', 'Toyota', 'Yaris', '2020'),
 ('WVWZZZ1JZ3W000000', 'AA000AA', 'Bianco', 'Volkswagen', 'Passat', '2021'),
 ('TMBJF9NE3M0000001', 'AA004AA', 'Grigio', 'Skoda', 'Octavia', '2021'),
 ('WBSBL92000EW00001', 'AA005AA', 'Nero', 'BMW', 'M3', '2010'),
-('WAUZZZ8E76A000001', 'AA006AA', 'Nero', 'Audi', 'A4', '2006');
+('WAUZZZ8E76A000001', 'AA006AA', 'Nero', 'Audi', 'A4', '2006'),
+('WVWZZZ1J123A00001', 'AA007AA', 'Giallo', 'Opel', 'Corsa', '2024'),
+('WVWZZZ1J178A00001', 'AA008AA', 'Rosso', 'Peugeot', '208', '2024');
+
 
 -- INSERIMENTO ANNUNCI
 INSERT INTO Annuncio(IdAnnuncio, Descrizione, Prezzo, EmailUtente, NumeroTelaio, CAP, Comune, Chilometraggio, AnnoImmatricolazione) VALUES
@@ -329,7 +375,9 @@ INSERT INTO Annuncio(IdAnnuncio, Descrizione, Prezzo, EmailUtente, NumeroTelaio,
 (4, 'Volkswagen Passat 2021', 55000.00, 'wolfgang.chan@supercars.de', 'WVWZZZ1JZ3W000000', '10176', 'Berlin', NULL, NULL),
 (5, 'Skoda Octavia 2021', 15000.00, 'beppefucile@autoclass.it', 'TMBJF9NE3M0000001', '35010', 'Padova', 50000, 2021),
 (6, 'BMW M3 2010', 50000.00, 'lorisgommata@ceccatomotors.it', 'WBSBL92000EW00001', '36100', 'Vicenza', 5000, 2010),
-(7, 'Audi A4 2006', 100000.00, 'beppefucile@autoclass.it', 'WAUZZZ8E76A000001', '35010', 'Padova', 500000, 2006);
+(7, 'Audi A4 2006', 100000.00, 'beppefucile@autoclass.it', 'WAUZZZ8E76A000001', '35010', 'Padova', 500000, 2006),
+(8, 'Peugeot 208 2024', 29000.00, 'wolfgang.chan@supercars.de', 'WVWZZZ1J178A00001', '10176', 'Berlin', NULL, NULL),
+(9, 'Opel Corsa 2024', 27000.00, 'wolfgang.chan@supercars.de', 'WVWZZZ1J123A00001', '10176', 'Berlin', NULL, NULL);
 
 -- INSERIMENTO IMMAGINI-ANNUNCI
 INSERT INTO ImmagineAnnuncio(UrlImmagine, IdAnnuncio) VALUES
@@ -378,15 +426,48 @@ INSERT INTO ImmagineAnnuncio(UrlImmagine, IdAnnuncio) VALUES
 ('https://www.autosearch.it/img/beppefucile%40autoclass%2Eit/audi-a4-2006-1.jpg', 7),
 ('https://www.autosearch.it/img/beppefucile%40autoclass%2Eit/audi-a4-2006-2.jpg', 7),
 ('https://www.autosearch.it/img/beppefucile%40autoclass%2Eit/audi-a4-2006-3.jpg', 7),
-('https://www.autosearch.it/img/beppefucile%40autoclass%2Eit/audi-a4-2006-4.jpg', 7);
+('https://www.autosearch.it/img/beppefucile%40autoclass%2Eit/audi-a4-2006-4.jpg', 7),
+('https://www.autosearch.it/img/wolfgang%2Echan%40supercars%2Ede/peugeot-208-2024-1.jpg', 8),
+('https://www.autosearch.it/img/wolfgang%2Echan%40supercars%2Ede/peugeot-208-2024-2.jpg', 8),
+('https://www.autosearch.it/img/wolfgang%2Echan%40supercars%2Ede/peugeot-208-2024-3.jpg', 8),
+('https://www.autosearch.it/img/wolfgang%2Echan%40supercars%2Ede/peugeot-208-2024-4.jpg', 8),
+('https://www.autosearch.it/img/wolfgang%2Echan%40supercars%2Ede/peugeot-208-2024-5.jpg', 8),
+('https://www.autosearch.it/img/wolfgang%2Echan%40supercars%2Ede/peugeot-208-2024-6.jpg', 8),
+('https://www.autosearch.it/img/wolfgang%2Echan%40supercars%2Ede/peugeot-208-2024-7.jpg', 8),
+('https://www.autosearch.it/img/wolfgang%2Echan%40supercars%2Ede/peugeot-208-2024-8.jpg', 8),
+('https://www.autosearch.it/img/wolfgang%2Echan%40supercars%2Ede/peugeot-208-2024-9.jpg', 8),
+('https://www.autosearch.it/img/wolfgang%2Echan%40supercars%2Ede/peugeot-208-2024-10.jpg', 8),
+('https://www.autosearch.it/img/wolfgang%2Echan%40supercars%2Ede/opel-corsa-2024-1.jpg', 9),
+('https://www.autosearch.it/img/wolfgang%2Echan%40supercars%2Ede/opel-corsa-2024-2.jpg', 9),
+('https://www.autosearch.it/img/wolfgang%2Echan%40supercars%2Ede/opel-corsa-2024-3.jpg', 9),
+('https://www.autosearch.it/img/wolfgang%2Echan%40supercars%2Ede/opel-corsa-2024-4.jpg', 9),
+('https://www.autosearch.it/img/wolfgang%2Echan%40supercars%2Ede/opel-corsa-2024-5.jpg', 9);
+
 
 -- INSERIMENTO PREFERENZE
 INSERT INTO Preferenze(EmailUtente, IdAnnuncio) VALUES
 ('deodatologgia@gmail.com', 6),
 ('deodatologgia@gmail.com', 7),
 ('deodatologgia@gmail.com', 2),
+('deodatologgia@gmail.com', 4),
+('deodatologgia@gmail.com', 9),
 ('cirorusso@gmail.com', 4),
-('cirorusso@gmail.com', 5);
+('cirorusso@gmail.com', 5),
+('cirorusso@gmail.com', 6),
+('cirorusso@gmail.com', 8),
+('cirorusso@gmail.com', 9),
+('guidolavespa@libero.it', 1),
+('guidolavespa@libero.it', 6),
+('guidolavespa@libero.it', 2),
+('guidolavespa@libero.it', 3),
+('guidolavespa@libero.it', 4),
+('guidolavespa@libero.it', 9),
+('marcopolo@tiscali.it', 1),
+('marcopolo@tiscali.it', 2),
+('marcopolo@tiscali.it', 3),
+('marcopolo@tiscali.it', 9),
+('marcopolo@tiscali.it', 6),
+('marcopolo@tiscali.it', 5);
 
 -- INSERIMENTO PREZZI 
 INSERT INTO Prezzo(IdAnnuncio, DataPrezzo, Valore) VALUES
@@ -408,7 +489,17 @@ INSERT INTO Prezzo(IdAnnuncio, DataPrezzo, Valore) VALUES
 (6, '2024-01-02 00:00:00', 52000.00),
 (6, '2024-01-06 00:00:00', 50000.00),
 
-(7, '2010-04-14 00:00:00', 100000.00);
+(7, '2010-04-14 00:00:00', 100000.00),
+
+(8, '2024-01-01 00:00:00', 27000.00),
+(8, '2024-02-05 00:00:00', 30000.00),
+(8, '2024-05-08 00:00:00', 28000.00),
+(8, '2024-06-10 00:00:00', 29000.00),
+
+(9, '2024-01-01 00:00:00', 25000.00),
+(9, '2024-02-05 00:00:00', 28000.00),
+(9, '2024-05-08 00:00:00', 26000.00),
+(9, '2024-06-10 00:00:00', 27000.00);
 
 -------------------------------------------------------------------------------------------------------
 -- QUERY
@@ -449,3 +540,12 @@ WHERE MR.MediaValutazione > (
 )
 GROUP BY A.EmailUtente, M.Alimentazione
 ORDER BY AnnunciAlimentazione DESC;
+
+-- trovare la marca di auto salvata da più di un utente come preferita, ordinando per numero di preferenze
+SELECT AU.Marca, COUNT(*) AS Preferenze
+FROM Preferenze AS P JOIN Annuncio AS A ON P.IdAnnuncio=A.IdAnnuncio
+    JOIN Veicolo AS V ON A.NumeroTelaio=V.NumeroTelaio
+    JOIN Automobile AS AU ON V.MarcaAuto=AU.Marca AND V.ModelloAuto=AU.Modello AND V.VersioneAuto=AU.Versione
+GROUP BY AU.Marca
+HAVING COUNT(*) > 1
+ORDER BY Preferenze DESC;
