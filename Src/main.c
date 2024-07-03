@@ -25,7 +25,6 @@ int inizializzaConnessione(char user[], char pass[], char database[], char host[
         PQfinish(conn);
         return 1;
     } else {
-        printf("Connessione al database riuscita\n");
         return 0;
     }
 }
@@ -137,10 +136,12 @@ int main(int argc, char const *argv[]) {
         printf(
             "\t11. Visualizza le email degli utenti, e l'auto, che hanno salvato almeno un "
             "annuncio come preferito che soddifa i parametri specificati\n");
-        printf("\t12. \n");
-
-        printf("\t8. SELECT ___ FROM ___\n");
-        printf("\t9. SELECT ___ FROM ___ WHERE ___ GROUP BY ___ HAVING ___ \n");
+        printf(
+            "\t12. Reperire suggerimenti di completamento nella barra di ricerca degli annunci\n");
+        //---------------------------------
+        printf("\n- QUERY EXTRA PERSONALIZZATE\n");
+        printf("\t13. SELECT ___ FROM ___\n");
+        printf("\t14. SELECT ___ FROM ___ WHERE ___ GROUP BY ___ HAVING ___ \n");
         printf("\n---------------------------------\n");
         printf("\t0. Esci\n");
 
@@ -266,61 +267,6 @@ int main(int argc, char const *argv[]) {
                     "DataModifica;";
                 eseguiQuery(query6);
                 aspettaTasto();
-                break;
-            case 99:
-                do {
-                    system("clear");
-                    printf("Query parametrica 1\n");
-                    printf("SELECT ____\nFROM ____\n\n");
-
-                    printf("Inserisci primo parametro: ");
-                    char param1[20];
-                    scanf("%s", &param1[0]);
-                    printf("Inserisci secondo parametro: ");
-                    char param2[20];
-                    scanf("%s", &param2[0]);
-
-                    printf("\nRisultato query:\n");
-                    printf("SELECT %s\nFROM %s\n", param1, param2);
-
-                    char query7[300];
-                    sprintf(query7, "SELECT %s FROM %s", param1, param2);
-
-                    eseguiQuery(query7);
-                    printf("\n\nVuoi riprovare? (s/n) ");
-                    getchar();
-                } while (getchar() == 's');
-                break;
-            case 98:
-                do {
-                    system("clear");
-                    printf("Query parametrica 2\n");
-                    printf("SELECT ____\nFROM ____\nGROUP BY ____\nHAVING ____\n\n");
-
-                    printf("Inserisci primo parametro (SELECT): ");
-                    char param1[20];
-                    scanf("%s", &param1[0]);
-                    printf("Inserisci secondo parametro (FROM): ");
-                    char param2[20];
-                    scanf("%s", &param2[0]);
-                    printf("Inserisci terzo parametro (GROUP BY): ");
-                    char param3[20];
-                    scanf("%s", &param3[0]);
-                    printf("Inserisci quarto parametro (HAVING): ");
-                    char param4[20];
-                    scanf("%s", &param4[0]);
-
-                    printf("\nRisultato query:\n");
-                    printf("SELECT %s\nFROM %s\nGROUP BY %s\nHAVING %s\n", param1, param2, param3,
-                           param4);
-
-                    char query7[300];
-                    sprintf(query7, "SELECT %s FROM %s", param1, param2);
-
-                    eseguiQuery(query7);
-                    printf("\n\nVuoi riprovare? (s/n) ");
-                    getchar();
-                } while (getchar() == 's');
                 break;
             case 8:
                 do {
@@ -501,54 +447,108 @@ int main(int argc, char const *argv[]) {
                 } while (getchar() == 's');
                 break;
             case 12:
-                //"SELECT SELECT A.IdAnnuncio, A.Descrizione, A.Colore, A.Prezzo, A.Chilometraggio,
-                // A.AnnoImmatricolazione, A.Comune, A.CAP, A.EmailUtente FROM Annuncio AS A JOIN
-                // Veicolo AS V ON A.NumeroTelaio=V.NumeroTelaio JOIN Automobile AS AU ON
-                // V.MarcaAuto=AU.Marca AND V.ModelloAuto=AU.Modello AND V.VersioneAuto=AU.Versione
-                // WHERE Marca LIKE '____' OR Modello LIKE '____' OR Versione LIKE '____';"
                 do {
                     system("clear");
                     printf("Query parametrica 3\n");
                     printf(
-                        "SELECT SELECT A.IdAnnuncio, A.Descrizione, A.Colore, A.Prezzo, "
-                        "A.Chilometraggio, A.AnnoImmatricolazione, A.Comune, A.CAP, A.EmailUtente "
+                        "SELECT A.IdAnnuncio, A.Descrizione, V.Colore, A.Prezzo, "
+                        "A.Chilometraggio, A.AnnoImmatricolazione, A.Comune, A.CAP, A.EmailUtente\n"
                         "FROM "
-                        "Annuncio AS A JOIN Veicolo AS V ON A.NumeroTelaio=V.NumeroTelaio JOIN "
+                        "Annuncio AS A JOIN Veicolo AS V ON A.NumeroTelaio=V.NumeroTelaio\n\tJOIN "
                         "Automobile AS AU ON V.MarcaAuto=AU.Marca AND V.ModelloAuto=AU.Modello AND "
-                        "V.VersioneAuto=AU.Versione WHERE Marca LIKE '\%____\%' OR Modello LIKE "
+                        "V.VersioneAuto=AU.Versione\nWHERE Marca LIKE '\%____\%' OR Modello LIKE "
                         "'\%____\%' "
                         "OR "
                         "Versione LIKE '\%____\%';\n\n");
 
                     printf("Inserisci la marca o modello o versione dell'auto: ");
-                    char param1[20];
+                    char param1[30];
                     scanf("%s", &param1[0]);
+                    char input[30] = "";
+                    strcat(input, "%");
+                    strcat(input, param1);
+                    strcat(input, "%");
 
                     printf("\nRisultato query:\n");
                     printf(
-                        "SELECT SELECT A.IdAnnuncio, A.Descrizione, A.Colore, A.Prezzo, "
-                        "A.Chilometraggio, A.AnnoImmatricolazione, A.Comune, A.CAP, A.EmailUtente "
+                        "SELECT A.IdAnnuncio, A.Descrizione, V.Colore, A.Prezzo, "
+                        "A.Chilometraggio, A.AnnoImmatricolazione, A.Comune, A.CAP, A.EmailUtente\n"
                         "FROM "
-                        "Annuncio AS A JOIN Veicolo AS V ON A.NumeroTelaio=V.NumeroTelaio JOIN "
+                        "Annuncio AS A JOIN Veicolo AS V ON A.NumeroTelaio=V.NumeroTelaio\n\tJOIN "
                         "Automobile AS AU ON V.MarcaAuto=AU.Marca AND V.ModelloAuto=AU.Modello AND "
-                        "V.VersioneAuto=AU.Versione WHERE Marca LIKE '\%%s\%' OR Modello LIKE "
-                        "'\%%s\%' "
-                        "OR Versione LIKE '\%%s\%';\n\n");
+                        "V.VersioneAuto=AU.Versione\nWHERE Marca LIKE '%s' OR Modello LIKE "
+                        "'%s' "
+                        "OR Versione LIKE '%s';\n\n",
+                        input, input, input);
 
                     PGresult *statement5 = PQprepare(
                         conn, "queryP5",
-                        "SELECT SELECT A.IdAnnuncio, A.Descrizione, A.Colore, A.Prezzo, "
+                        "SELECT A.IdAnnuncio, A.Descrizione, V.Colore, A.Prezzo, "
                         "A.Chilometraggio, A.AnnoImmatricolazione, A.Comune, A.CAP, A.EmailUtente "
                         "FROM "
                         "Annuncio AS A JOIN Veicolo AS V ON A.NumeroTelaio=V.NumeroTelaio JOIN "
                         "Automobile AS AU ON V.MarcaAuto=AU.Marca AND V.ModelloAuto=AU.Modello AND "
-                        "V.VersioneAuto=AU.Versione WHERE Marca LIKE '\%$1\%' OR Modello LIKE "
-                        "'\%$1\%' "
-                        "OR Versione LIKE '\%$1\%';",
-                        5, NULL);
-                    const char *const punt[] = {param1};
+                        "V.VersioneAuto=AU.Versione WHERE Marca LIKE $1::varchar OR Modello "
+                        "LIKE $1::varchar OR Versione LIKE $1::varchar;",
+                        1, NULL);
+                    const char *const punt[] = {input};
 
                     eseguiQueryParametrica("queryP5", 1, punt);
+                    printf("\n\nVuoi riprovare? (s/n) ");
+                    getchar();
+                } while (getchar() == 's');
+                break;
+            case 13:
+                do {
+                    system("clear");
+                    printf("Query parametrica 1\n");
+                    printf("SELECT ____\nFROM ____\n\n");
+
+                    printf("Inserisci primo parametro: ");
+                    char param1[20];
+                    scanf("%s", &param1[0]);
+                    printf("Inserisci secondo parametro: ");
+                    char param2[20];
+                    scanf("%s", &param2[0]);
+
+                    printf("\nRisultato query:\n");
+                    printf("SELECT %s\nFROM %s\n", param1, param2);
+
+                    char query7[300];
+                    sprintf(query7, "SELECT %s FROM %s", param1, param2);
+
+                    eseguiQuery(query7);
+                    printf("\n\nVuoi riprovare? (s/n) ");
+                    getchar();
+                } while (getchar() == 's');
+                break;
+            case 14:
+                do {
+                    system("clear");
+                    printf("Query parametrica 2\n");
+                    printf("SELECT ____\nFROM ____\nGROUP BY ____\nHAVING ____\n\n");
+
+                    printf("Inserisci primo parametro (SELECT): ");
+                    char param1[20];
+                    scanf("%s", &param1[0]);
+                    printf("Inserisci secondo parametro (FROM): ");
+                    char param2[20];
+                    scanf("%s", &param2[0]);
+                    printf("Inserisci terzo parametro (GROUP BY): ");
+                    char param3[20];
+                    scanf("%s", &param3[0]);
+                    printf("Inserisci quarto parametro (HAVING): ");
+                    char param4[20];
+                    scanf("%s", &param4[0]);
+
+                    printf("\nRisultato query:\n");
+                    printf("SELECT %s\nFROM %s\nGROUP BY %s\nHAVING %s\n", param1, param2, param3,
+                           param4);
+
+                    char query7[300];
+                    sprintf(query7, "SELECT %s FROM %s", param1, param2);
+
+                    eseguiQuery(query7);
                     printf("\n\nVuoi riprovare? (s/n) ");
                     getchar();
                 } while (getchar() == 's');
