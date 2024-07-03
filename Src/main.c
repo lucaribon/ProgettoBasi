@@ -73,6 +73,13 @@ void eseguiQueryParametrica(char query[], int n_param, const char *const *param)
     PQclear(res);
 }
 
+void aspettaTasto() {
+    printf("\nPremi un tasto per continuare: ");
+    getchar();
+    getchar();
+    system("clear");
+}
+
 int main(int argc, char const *argv[]) {
     // Credenziali database
 
@@ -155,6 +162,7 @@ int main(int argc, char const *argv[]) {
                     "SELECT Email, COUNT(NumeroAnnunci) AS AnnunciPubblicati FROM Utente AS U JOIN "
                     "Annuncio AS A ON U.Email=A.EmailUtente GROUP BY Email;";
                 eseguiQuery(query);
+                aspettaTasto();
                 break;
             case 3:
                 break;
