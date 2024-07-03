@@ -542,6 +542,13 @@ INSERT INTO Prezzo(IdAnnuncio, DataPrezzo, Valore) VALUES
 (9, '2024-05-08 00:00:00', 26000.00);
 
 -------------------------------------------------------------------------------------------------------
+-- INDICI
+-------------------------------------------------------------------------------------------------------
+CREATE INDEX IF NOT EXISTS indx_auto ON Automobile(Marca, Modello, Versione);
+
+CREATE INDEX IF NOT EXISTS indx_email ON Utente(Email);
+
+-------------------------------------------------------------------------------------------------------
 -- QUERY
 -------------------------------------------------------------------------------------------------------
 -- contare il numero di annunci per ogni utente
@@ -645,7 +652,7 @@ FROM Preferenze AS P JOIN Annuncio AS A ON P.IdAnnuncio=A.IdAnnuncio
 WHERE M.Trazione = :trazione AND M.Alimentazione = :alimentazione AND M.Potenza > :potenza AND AU.Cambio = :cambio AND AU.NumPosti = :numPosti;
 
 -- reperire suggerimenti di completamento nella barra di ricerca degli annunci
-SELECT SELECT A.IdAnnuncio, A.Descrizione, A.Colore, A.Prezzo, A.Chilometraggio, A.AnnoImmatricolazione, A.Comune, A.CAP, A.EmailUtente
+SELECT A.IdAnnuncio, A.Descrizione, V.Colore, A.Prezzo, A.Chilometraggio, A.AnnoImmatricolazione, A.Comune, A.CAP, A.EmailUtente
 FROM Annuncio AS A JOIN Veicolo AS V ON A.NumeroTelaio=V.NumeroTelaio
     JOIN Automobile AS AU ON V.MarcaAuto=AU.Marca AND V.ModelloAuto=AU.Modello AND V.VersioneAuto=AU.Versione
 WHERE Marca LIKE "%:input%" OR Modello LIKE "%:input%" OR Versione LIKE "%:input%"; 
