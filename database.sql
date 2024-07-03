@@ -46,8 +46,12 @@ CREATE TABLE Recensione(
     Commento VARCHAR(512),
     CHECK(Valutazione >= 0 AND Valutazione <= 10 AND EmailRecensore != EmailRecensito),
     PRIMARY KEY (EmailRecensore, EmailRecensito),
-    FOREIGN KEY (EmailRecensore) REFERENCES Utente(Email),
-    FOREIGN KEY (EmailRecensito) REFERENCES Utente(Email)
+    FOREIGN KEY (EmailRecensore) REFERENCES Utente(Email) 
+        ON DELETE CASCADE 
+        ON UPDATE CASCADE,
+    FOREIGN KEY (EmailRecensito) REFERENCES Utente(Email) 
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
 );
 
 CREATE TABLE Luogo(
@@ -64,15 +68,21 @@ CREATE TABLE Impresa(
     NomeImpresa VARCHAR(64) NOT NULL,
     SedeComune VARCHAR(64) NOT NULL,
     SedeCAP VARCHAR(5) NOT NULL,
-    FOREIGN KEY (EmailUtente) REFERENCES Utente(Email),
-    FOREIGN KEY (SedeComune, SedeCAP) REFERENCES Luogo(Comune, CAP)
+    FOREIGN KEY (EmailUtente) REFERENCES Utente(Email)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE,
+    FOREIGN KEY (SedeComune, SedeCAP) REFERENCES Luogo(Comune, CAP) 
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
 );
 
 CREATE TABLE Privato(
     EmailUtente VARCHAR(64) NOT NULL PRIMARY KEY,
     NomeCognome VARCHAR(64) NOT NULL,
     DataNascita DATE,
-    FOREIGN KEY (EmailUtente) REFERENCES Utente(Email)
+    FOREIGN KEY (EmailUtente) REFERENCES Utente(Email) 
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
 );
 
 CREATE TABLE Immagine(
@@ -99,7 +109,9 @@ CREATE TABLE Automobile(
     CodiceMotore VARCHAR(64) NOT NULL,
     ClasseEmissioni VARCHAR(64),
     PRIMARY KEY (Marca, Modello, Versione),
-    FOREIGN KEY (CodiceMotore) REFERENCES Motorizzazione(CodiceMotore)
+    FOREIGN KEY (CodiceMotore) REFERENCES Motorizzazione(CodiceMotore) 
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
 );
 
 CREATE TABLE Veicolo(
@@ -110,6 +122,8 @@ CREATE TABLE Veicolo(
     ModelloAuto VARCHAR(64) NOT NULL,
     VersioneAuto VARCHAR(64) NOT NULL,
     FOREIGN KEY (MarcaAuto, ModelloAuto, VersioneAuto) REFERENCES Automobile(Marca, Modello, Versione)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
 );
 
 CREATE TABLE Annuncio(
@@ -122,25 +136,39 @@ CREATE TABLE Annuncio(
     Comune VARCHAR(64) NOT NULL,
     Chilometraggio INT,
     AnnoImmatricolazione INT,
-    FOREIGN KEY (EmailUtente) REFERENCES Utente(Email),
-    FOREIGN KEY (NumeroTelaio) REFERENCES Veicolo(NumeroTelaio),
+    FOREIGN KEY (EmailUtente) REFERENCES Utente(Email)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE,
+    FOREIGN KEY (NumeroTelaio) REFERENCES Veicolo(NumeroTelaio)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE,
     FOREIGN KEY (CAP, Comune) REFERENCES Luogo(CAP, Comune)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
 );
 
 CREATE TABLE ImmagineAnnuncio(
     UrlImmagine VARCHAR(256) NOT NULL,
     IdAnnuncio INT NOT NULL,
     PRIMARY KEY (UrlImmagine, IdAnnuncio),
-    FOREIGN KEY (UrlImmagine) REFERENCES Immagine(UrlImmagine),
+    FOREIGN KEY (UrlImmagine) REFERENCES Immagine(UrlImmagine)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE,
     FOREIGN KEY (IdAnnuncio) REFERENCES Annuncio(IdAnnuncio)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
 );
 
 CREATE TABLE Preferenze(
     EmailUtente VARCHAR(64) NOT NULL,
     IdAnnuncio INT NOT NULL,
     PRIMARY KEY (EmailUtente, IdAnnuncio),
-    FOREIGN KEY (EmailUtente) REFERENCES Utente(Email),
+    FOREIGN KEY (EmailUtente) REFERENCES Utente(Email)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE,
     FOREIGN KEY (IdAnnuncio) REFERENCES Annuncio(IdAnnuncio)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
 );
 
 CREATE TABLE Prezzo(
@@ -149,6 +177,8 @@ CREATE TABLE Prezzo(
     Valore DECIMAL(10, 2) NOT NULL,
     PRIMARY KEY (IdAnnuncio, DataPrezzo),
     FOREIGN KEY (IdAnnuncio) REFERENCES Annuncio(IdAnnuncio)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
 );
 
 -------------------------------------------------------------------------------------------------------
@@ -217,6 +247,22 @@ CREATE OR REPLACE TRIGGER incrementaNumeroAnnunciUtente AFTER INSERT ON Annuncio
 FOR EACH ROW
 EXECUTE FUNCTION incrementaNumeroAnnunci();
 
+-- inserisce i nuovi prezzi o gli aggiornamenti dei prezzi nella tabella Prezzo
+CREATE OR REPLACE FUNCTION aggiornaTabellaPrezzo()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    INSERT INTO Prezzo(IdAnnuncio, DataPrezzo, Valore)
+    VALUES (NEW.IdAnnuncio, CURRENT_TIMESTAMP, NEW.Prezzo);
+
+    RETURN NEW;
+END;
+$$;
+
+CREATE OR REPLACE TRIGGER aggiornaStoricoPrezzoAnnuncio AFTER INSERT OR UPDATE ON Annuncio
+FOR EACH ROW
+EXECUTE FUNCTION aggiornaTabellaPrezzo();
 -------------------------------------------------------------------------------------------------------
 -- INSERIMENTO DATI
 -------------------------------------------------------------------------------------------------------
@@ -375,11 +421,11 @@ INSERT INTO Veicolo(NumeroTelaio, Targa, Colore, MarcaAuto, ModelloAuto, Version
 -- INSERIMENTO ANNUNCI
 INSERT INTO Annuncio(IdAnnuncio, Descrizione, Prezzo, EmailUtente, NumeroTelaio, CAP, Comune, Chilometraggio, AnnoImmatricolazione) VALUES
 (1, 'Audi A4 2020 Business', 30000.00, 'cirorusso@gmail.com', 'WAUZZZ8KZMA000001', '90126', 'Palermo', 100000, 2020),
-(2, 'Audi A4 2020 S-Line', 35000.00, 'cirorusso@gmail.com', 'WAUZZZ8KZMA040002', '90126', 'Palermo', 120000, 2020),
+(2, 'Audi A4 2020 S-Line', 47000.00, 'cirorusso@gmail.com', 'WAUZZZ8KZMA040002', '90126', 'Palermo', 120000, 2020),
 (3, 'Toyota Yaris 2020', 20000.00, 'anitatrevisani@autosrl.com', 'JTDKTUD3000000001', '35010', 'Padova', 50000, 2020),
-(4, 'Volkswagen Passat 2021', 55000.00, 'wolfgang.chan@supercars.de', 'WVWZZZ1JZ3W000000', '10176', 'Berlin', NULL, NULL),
+(4, 'Volkswagen Passat 2021', 12000.00, 'wolfgang.chan@supercars.de', 'WVWZZZ1JZ3W000000', '10176', 'Berlin', NULL, NULL),
 (5, 'Skoda Octavia 2021', 15000.00, 'beppefucile@autoclass.it', 'TMBJF9NE3M0000001', '35010', 'Padova', 50000, 2021),
-(6, 'BMW M3 2010', 50000.00, 'lorisgommata@ceccatomotors.it', 'WBSBL92000EW00001', '36100', 'Vicenza', 5000, 2010),
+(6, 'BMW M3 2010', 49000.00, 'lorisgommata@ceccatomotors.it', 'WBSBL92000EW00001', '36100', 'Vicenza', 5000, 2010),
 (7, 'Audi A4 2006', 100000.00, 'beppefucile@autoclass.it', 'WAUZZZ8E76A000001', '35010', 'Padova', 500000, 2006),
 (8, 'Peugeot 208 2024', 29000.00, 'wolfgang.chan@supercars.de', 'WVWZZZ1J178A00001', '10176', 'Berlin', NULL, NULL),
 (9, 'Opel Corsa 2024', 27000.00, 'wolfgang.chan@supercars.de', 'WVWZZZ1J123A00001', '10176', 'Berlin', NULL, NULL);
@@ -478,32 +524,22 @@ INSERT INTO Prezzo(IdAnnuncio, DataPrezzo, Valore) VALUES
 (1, '2024-01-01 00:00:00', 35000.00),
 (1, '2024-02-05 00:00:00', 37000.00),
 (1, '2024-05-08 00:00:00', 32000.00),
-(1, '2024-06-10 00:00:00', 30000.00),
 
 (2, '2024-01-04 00:00:00', 35000.00),
-(2, '2024-05-02 00:00:00', 45000.00),
-
-(3, '2024-03-06 00:00:00', 20000.00),
+(2, '2024-06-20 00:00:00', 45000.00),
 
 (4, '2024-02-24 00:00:00', 13500.00),
-(4, '2024-03-08 00:00:00', 12000.00),
-
-(5, '2024-07-04 00:00:00', 15000.00),
 
 (6, '2024-01-02 00:00:00', 52000.00),
 (6, '2024-01-06 00:00:00', 50000.00),
 
-(7, '2010-04-14 00:00:00', 100000.00),
-
 (8, '2024-01-01 00:00:00', 27000.00),
 (8, '2024-02-05 00:00:00', 30000.00),
 (8, '2024-05-08 00:00:00', 28000.00),
-(8, '2024-06-10 00:00:00', 29000.00),
 
 (9, '2024-01-01 00:00:00', 25000.00),
 (9, '2024-02-05 00:00:00', 28000.00),
-(9, '2024-05-08 00:00:00', 26000.00),
-(9, '2024-06-10 00:00:00', 27000.00);
+(9, '2024-05-08 00:00:00', 26000.00);
 
 -------------------------------------------------------------------------------------------------------
 -- QUERY
@@ -513,7 +549,7 @@ SELECT Email, COUNT(NumeroAnnunci) AS AnnunciPubblicati
 FROM Utente AS U JOIN Annuncio AS A ON U.Email=A.EmailUtente
 GROUP BY Email;
 
--- annunci con veicoli con trazione anteriore
+-- elencare gli annunci di veicoli a trazione anteriore
 SELECT IdAnnuncio, Descrizione, Colore, Prezzo, Chilometraggio, AnnoImmatricolazione, Comune, CAP, EmailUtente
 FROM Annuncio AS A JOIN Veicolo AS V ON A.NumeroTelaio=V.NumeroTelaio 
     JOIN Automobile AS AU ON V.MarcaAuto=AU.Marca AND V.ModelloAuto=AU.Modello AND V.VersioneAuto=AU.Versione
@@ -554,3 +590,67 @@ FROM Preferenze AS P JOIN Annuncio AS A ON P.IdAnnuncio=A.IdAnnuncio
 GROUP BY AU.Marca
 HAVING COUNT(*) > 1
 ORDER BY Preferenze DESC;
+
+-- stampare i nomi di chi ha fatto modifiche al prezzo di un annuncio nell'ultimo mese, i dati relativi al prezzo modificato e i dati dell'annuncio
+SELECT I.NomeImpresa AS Nome, A.IdAnnuncio, DATE(P.DataPrezzo) AS DataModifica, P.Valore AS PrezzoModificato, AU.Marca, AU.Modello, AU.Versione
+FROM Annuncio AS A JOIN Impresa AS I ON A.EmailUtente=I.EmailUtente
+    JOIN Prezzo AS P ON A.IdAnnuncio=P.IdAnnuncio
+    JOIN Veicolo AS V ON A.NumeroTelaio=V.NumeroTelaio
+    JOIN Automobile AS AU ON V.MarcaAuto=AU.Marca AND V.ModelloAuto=AU.Modello AND V.VersioneAuto=AU.Versione
+WHERE P.DataPrezzo >= CURRENT_DATE - 30
+
+UNION ALL
+
+SELECT Pri.NomeCognome AS Nome, A.IdAnnuncio, DATE(P.DataPrezzo) AS DataModifica, P.Valore AS PrezzoModificato, AU.Marca, AU.Modello, AU.Versione
+FROM Annuncio AS A JOIN Privato AS Pri ON A.EmailUtente=Pri.EmailUtente
+    JOIN Prezzo AS P ON A.IdAnnuncio=P.IdAnnuncio
+    JOIN Veicolo AS V ON A.NumeroTelaio=V.NumeroTelaio
+    JOIN Automobile AS AU ON V.MarcaAuto=AU.Marca AND V.ModelloAuto=AU.Modello AND V.VersioneAuto=AU.Versione
+WHERE P.DataPrezzo >= CURRENT_DATE - 30
+ORDER BY Nome, DataModifica;
+
+
+-------------------------------------------------------------------------------------------------------
+-- QUERY PARAMETRICHE
+-------------------------------------------------------------------------------------------------------
+-- trovare gli annunci di veicoli con un prezzo nel range specificato
+SELECT *
+FROM Annuncio as A               
+WHERE Prezzo > :prezzoMin AND Prezzo < :prezzoMax;
+
+-- trovare gli annunci localizzati in un comune specifico, di un tipo di utente (privato o impresa) 
+SELECT *
+FROM Annuncio as A JOIN :tipoUtente as T ON A.EmailUtente=T.EmailUtente
+WHERE A.Comune = :comune AND A.CAP = :cap;
+
+-- tutti gli annuncio di un privato che ha media valutazioni superiori a quella specificata
+DROP VIEW IF EXISTS MediaRecensioni;
+CREATE VIEW MediaRecensioni AS
+SELECT R.EmailRecensito AS UtenteRecensito, AVG(R.Valutazione) as MediaValutazione
+FROM Recensione AS R 
+GROUP BY R.EmailRecensito;
+
+SELECT * 
+FROM Annuncio AS A JOIN Privato AS T ON A.EmailUtente=T.EmailUtente
+    JOIN MediaRecensioni as R ON A.EmailUtente=R.EmailRecensito
+WHERE R.MediaValutazione > :valutazione;
+
+-- visualizza le email degli utenti, e l'auto, che hanno salvato almeno un annuncio come preferito che soddifa i parametri specificati
+SELECT P.EmailUtente, AU.Marca, AU.Modello, AU.Versione
+FROM Preferenze AS P JOIN Annuncio AS A ON P.IdAnnuncio=A.IdAnnuncio
+    JOIN Utente AS U ON P.EmailUtente=U.Email
+    JOIN Veicolo AS V ON A.NumeroTelaio=V.NumeroTelaio
+    JOIN Automobile AS AU ON V.MarcaAuto=AU.Marca AND V.ModelloAuto=AU.Modello AND V.VersioneAuto=AU.Versione
+    JOIN Motorizzazione AS M ON AU.CodiceMotore=M.CodiceMotore
+WHERE M.Trazione = :trazione AND M.Alimentazione = :alimentazione AND M.Potenza > :potenza AND AU.Cambio = :cambio AND AU.NumPosti = :numPosti;
+
+-- reperire suggerimenti di completamento nella barra di ricerca degli annunci
+SELECT SELECT A.IdAnnuncio, A.Descrizione, A.Colore, A.Prezzo, A.Chilometraggio, A.AnnoImmatricolazione, A.Comune, A.CAP, A.EmailUtente
+FROM Annuncio AS A JOIN Veicolo AS V ON A.NumeroTelaio=V.NumeroTelaio
+    JOIN Automobile AS AU ON V.MarcaAuto=AU.Marca AND V.ModelloAuto=AU.Modello AND V.VersioneAuto=AU.Versione
+WHERE Marca LIKE "%:input%" OR Modello LIKE "%:input%" OR Versione LIKE "%:input%"; 
+
+-- Extra 1:
+-- SELECT * FROM *
+-- Extra 2:
+-- SELECT * FROM * GROUP BY * HAVING *
